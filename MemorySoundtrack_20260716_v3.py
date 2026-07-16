@@ -5,6 +5,10 @@ import io
 from PIL import Image
 from google import genai
 from google.genai import types
+from dotenv import load_dotenv
+
+# Load environment variables from .env file (if present)
+load_dotenv()
 
 # ----------------------------------------------------
 # 1. Page Configuration & Theme Initialization
@@ -140,7 +144,7 @@ else:
 
 # Model Selections
 st.sidebar.markdown("### 🤖 Models")
-gemini_model = st.sidebar.text_input("Gemini Model", value="gemini-2.5-flash")
+gemini_model = st.sidebar.text_input("Gemini Model", value="gemini-3.5-flash")
 lyria_model = st.sidebar.text_input("Lyria Model", value="lyria-3-clip-preview")
 imagen_model = st.sidebar.text_input("Imagen Model", value="imagen-3.0-generate-002")
 
