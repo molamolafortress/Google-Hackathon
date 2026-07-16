@@ -259,7 +259,11 @@ with tab1:
                     try:
                         response = client.models.generate_content(
                             model=gemini_model,
-                            contents=[img, prompt]
+                            contents=[img, prompt],
+                            config=types.GenerateContentConfig(
+                                temperature=0.7,
+                                max_output_tokens=1024,
+                            )
                         )
                         temp_analyses.append({
                             "index": idx + 1,
@@ -317,7 +321,11 @@ with tab2:
                     try:
                         response = client.models.generate_content(
                             model=gemini_model,
-                            contents=synth_prompt
+                            contents=synth_prompt,
+                            config=types.GenerateContentConfig(
+                                temperature=0.4,
+                                max_output_tokens=800,
+                            )
                         )
                         st.session_state['soundtrack_prompt'] = response.text
                         st.success("✅ Music prompt synthesized!")

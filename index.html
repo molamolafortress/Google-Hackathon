@@ -1,0 +1,1601 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Soundtrack Generator</title>
+    <!-- Google Fonts: Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff3366;
+            --secondary: #ec4899;
+            --accent: #8b5cf6;
+            --bg-start: #09090e;
+            --bg-mid: #111122;
+            --bg-end: #0c0c16;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: 0 10px 30px 0 rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-mid) 50%, var(--bg-end) 100%);
+            color: var(--text-light);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* ----------------------------------------------------
+           1. Premium Page Header
+           ---------------------------------------------------- */
+        header {
+            margin-top: 40px;
+            margin-bottom: 30px;
+            text-align: center;
+            max-width: 800px;
+            padding: 0 20px;
+        }
+
+        .title-gradient {
+            background: linear-gradient(45deg, #ff3366, #ff6633, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 3.2rem;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            margin-bottom: 10px;
+            animation: pulse-glow 6s infinite alternate;
+        }
+
+        @keyframes pulse-glow {
+            0% { filter: drop-shadow(0 0 5px rgba(255, 51, 102, 0.1)); }
+            100% { filter: drop-shadow(0 0 15px rgba(236, 72, 153, 0.3)); }
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.15rem;
+            font-weight: 300;
+            line-height: 1.6;
+        }
+
+        /* ----------------------------------------------------
+           2. Layout Container
+           ---------------------------------------------------- */
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 0 24px 80px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Glassmorphic Panel Base */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: var(--glass-shadow);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        /* Collapsible Config Section */
+        .config-section {
+            padding: 15px 25px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .config-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .config-content {
+            display: none;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .config-content.active {
+            display: grid;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group select {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: white;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--secondary);
+        }
+
+        /* ----------------------------------------------------
+           3. Upload Stage
+           ---------------------------------------------------- */
+        .upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.3s ease, background 0.3s ease;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--secondary);
+            background: rgba(236, 72, 153, 0.03);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+            display: inline-block;
+            animation: float-icon 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes float-icon {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-8px); }
+        }
+
+        .upload-area p {
+            color: var(--text-muted);
+            font-weight: 300;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        /* Image Timeline Sorting Grid */
+        .timeline-container {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .timeline-container.active {
+            display: block;
+        }
+
+        .timeline-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .timeline-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .timeline-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 4/5;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .timeline-card img {
+            width: 100%;
+            height: 70%;
+            object-fit: cover;
+        }
+
+        .timeline-card-info {
+            padding: 10px;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.4);
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .timeline-card-number {
+            font-size: 0.8rem;
+            color: var(--secondary);
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .timeline-card-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .timeline-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: none;
+            color: white;
+            border-radius: 6px;
+            width: 32px;
+            height: 24px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease;
+        }
+
+        .timeline-btn:hover {
+            background: var(--secondary);
+        }
+
+        /* Primary Action Button */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 16px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 4px 15px rgba(236, 72, 153, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 25px rgba(236, 72, 153, 0.5);
+            background: linear-gradient(135deg, #ff4d7d 0%, #f43f5e 50%, #9c27b0 100%);
+        }
+
+        /* ----------------------------------------------------
+           4. Progress Stage
+           ---------------------------------------------------- */
+        .progress-container {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .progress-container.active {
+            display: block;
+        }
+
+        .progress-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+            background: linear-gradient(45deg, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .progress-steps-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 500px;
+            margin: 0 auto 30px auto;
+            text-align: left;
+        }
+
+        .progress-step {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 18px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.current {
+            background: rgba(236, 72, 153, 0.05);
+            border-color: rgba(236, 72, 153, 0.3);
+            color: var(--text-light);
+            box-shadow: inset 0 0 10px rgba(236, 72, 153, 0.05);
+        }
+
+        .progress-step.completed {
+            background: rgba(16, 185, 129, 0.05);
+            border-color: rgba(16, 185, 129, 0.3);
+            color: #10b981;
+        }
+
+        .progress-step-icon {
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        .progress-bar-outer {
+            width: 100%;
+            max-width: 500px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+
+        .progress-bar-inner {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.4s ease;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(236, 72, 153, 0.5);
+        }
+
+        /* ----------------------------------------------------
+           5. Player Stage
+           ---------------------------------------------------- */
+        .player-container {
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .player-container.active {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 30px;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (max-width: 900px) {
+            .player-container.active {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Left Column: Vinyl Player */
+        .player-left {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .vinyl-wrapper {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            margin-bottom: 24px;
+        }
+
+        .vinyl-record {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, #3a3a3a 0%, #151515 40%, #050505 60%, #111111 70%, #000000 100%);
+            border-radius: 50%;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6), inset 0 0 20px rgba(255,255,255,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            animation: spin 8s linear infinite paused;
+        }
+
+        .vinyl-record.playing {
+            animation-play-state: running;
+        }
+
+        /* Vinyl Grooves */
+        .vinyl-record::after {
+            content: '';
+            position: absolute;
+            top: 5%; left: 5%; bottom: 5%; right: 5%;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .vinyl-record::before {
+            content: '';
+            position: absolute;
+            top: 15%; left: 15%; bottom: 15%; right: 15%;
+            border: 1px dashed rgba(255, 255, 255, 0.03);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .vinyl-cover {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #0a0a0c;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            z-index: 2;
+        }
+
+        .vinyl-center-hole {
+            width: 12px;
+            height: 12px;
+            background: var(--bg-mid);
+            border-radius: 50%;
+            position: absolute;
+            z-index: 3;
+            box-shadow: inset 0 0 5px black;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Glowing Audio Bar Visualizer */
+        .visualizer-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 4px;
+            height: 40px;
+            width: 100%;
+            max-width: 250px;
+            margin-top: 10px;
+        }
+
+        .visualizer-bar {
+            width: 5px;
+            background: linear-gradient(180deg, var(--secondary), var(--primary));
+            border-radius: 4px;
+            height: 4px;
+            transition: height 0.15s ease;
+        }
+
+        .visualizer-bar.active {
+            animation: bounce-bar 1.2s ease-in-out infinite alternate;
+        }
+
+        @keyframes bounce-bar {
+            0% { height: 4px; }
+            100% { height: 35px; }
+        }
+
+        /* Right Column: Slideshow */
+        .player-right {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .slideshow-viewport {
+            width: 100%;
+            aspect-ratio: 16/10;
+            border-radius: 18px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: black;
+        }
+
+        /* Ambient blur background */
+        .ambient-bg {
+            position: absolute;
+            top: -20px; left: -20px; bottom: -20px; right: -20px;
+            background-size: cover;
+            background-position: center;
+            filter: blur(25px) opacity(0.4);
+            z-index: 0;
+            transition: background-image 1s ease-in-out;
+        }
+
+        .slide-image {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .slide-image.active {
+            opacity: 1;
+        }
+
+        /* Slide navigation Overlay */
+        .slide-nav-overlay {
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            z-index: 2;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 15px;
+            pointer-events: none;
+        }
+
+        .slide-arrow {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        .slide-arrow:hover {
+            background: rgba(236, 72, 153, 0.8);
+            transform: scale(1.1);
+        }
+
+        .slide-indicator {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            color: white;
+            z-index: 2;
+        }
+
+        /* ----------------------------------------------------
+           6. Glassmorphic Control Dashboard
+           ---------------------------------------------------- */
+        .dashboard-panel {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 18px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .track-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .track-title {
+            font-weight: 600;
+            font-size: 1.15rem;
+            color: white;
+        }
+
+        .track-artist {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .track-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .ctrl-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.2s, transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ctrl-btn:hover {
+            color: var(--secondary);
+            transform: scale(1.1);
+        }
+
+        .ctrl-btn-play {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--secondary);
+            color: white;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 10px rgba(236,72,153,0.3);
+        }
+
+        .ctrl-btn-play:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Track Progress Bar */
+        .track-progress-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .time-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            width: 35px;
+        }
+
+        .progress-slider {
+            flex-grow: 1;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+
+        .progress-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--secondary);
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(236,72,153,0.8);
+        }
+
+        /* Volume & Toggle controls */
+        .utility-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 12px;
+        }
+
+        .autoplay-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+
+        .toggle-switch input { display: none; }
+
+        .slider-round {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(255,255,255,0.15);
+            transition: .3s;
+            border-radius: 34px;
+        }
+
+        .slider-round:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider-round {
+            background-color: var(--secondary);
+        }
+
+        input:checked + .slider-round:before {
+            transform: translateX(20px);
+        }
+
+        .volume-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .volume-slider {
+            width: 80px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        /* Lyrics and story scroll window */
+        .lyrics-panel {
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 18px;
+            padding: 20px;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .lyrics-panel h4 {
+            font-size: 0.9rem;
+            color: var(--secondary);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .lyrics-content {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        /* ----------------------------------------------------
+           7. Developer Details (Collapsible Drawer)
+           ---------------------------------------------------- */
+        .dev-drawer {
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.05);
+            background: rgba(0,0,0,0.3);
+            margin-top: 40px;
+            overflow: hidden;
+        }
+
+        .dev-drawer-header {
+            padding: 15px 25px;
+            background: rgba(255, 255, 255, 0.02);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+            color: var(--text-muted);
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .dev-drawer-content {
+            display: none;
+            padding: 25px;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .dev-drawer-content.active {
+            display: flex;
+        }
+
+        .dev-prompt-card {
+            background: rgba(255,255,255,0.02);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .dev-prompt-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 6px;
+        }
+
+        .dev-prompt-text {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-family: monospace;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+
+        .dev-stories-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        .dev-story-card {
+            background: rgba(255,255,255,0.01);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .dev-story-header {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: white;
+            margin-bottom: 6px;
+        }
+
+        .dev-story-body {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* Utility Footer reset */
+        footer {
+            margin-top: auto;
+            padding: 30px 20px;
+            text-align: center;
+            color: rgba(255,255,255,0.15);
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="title-gradient">MEMORY SOUNDTRACK</div>
+        <div class="subtitle">소중한 추억이 깃든 일상 사진들을 등록해 보세요. Gemini가 연대기별 감성을 입체 분석하고, DeepMind Lyria가 서정적인 연주곡을 작곡하여 세상에 단 하나뿐인 시각적 앨범 플레이어로 재탄생시킵니다.</div>
+    </header>
+
+    <div class="container">
+
+        <!-- CONFIGURATION EXPANDER PANEL -->
+        <div class="config-section" id="configExpander">
+            <div class="config-header">
+                <span>⚙️ API 및 모델 정밀 세부 설정 (Config & Models)</span>
+                <span id="configArrow">▶</span>
+            </div>
+            <div class="config-content" id="configContent">
+                <div class="form-group">
+                    <label for="apiType">API 연동 방식</label>
+                    <select id="apiType">
+                        <option value="Gemini Developer API">Gemini Developer API</option>
+                        <option value="Vertex AI">Google Cloud Vertex AI</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="apiKey">Gemini API Key</label>
+                    <input type="password" id="apiKey" placeholder="환경변수 자동 매핑 사용">
+                </div>
+                <div class="form-group">
+                    <label for="projectId">GCP Project ID</label>
+                    <input type="text" id="projectId" placeholder="환경변수 자동 매핑 사용">
+                </div>
+                <div class="form-group">
+                    <label for="location">GCP Location</label>
+                    <input type="text" id="location" value="us-central1">
+                </div>
+                <div class="form-group">
+                    <label for="geminiModel">스토리 분석 모델 (Gemini)</label>
+                    <input type="text" id="geminiModel" value="gemini-3.5-flash">
+                </div>
+                <div class="form-group">
+                    <label for="lyriaModel">사운드 트랙 모델 (Lyria)</label>
+                    <input type="text" id="lyriaModel" value="lyria-3-clip-preview">
+                </div>
+                <div class="form-group">
+                    <label for="imagenModel">앨범 커버 모델 (Imagen)</label>
+                    <input type="text" id="imagenModel" value="imagen-4.0-generate-001">
+                </div>
+            </div>
+        </div>
+
+        <!-- STAGE 1: UPLOADER & TIMELINE SORTING -->
+        <div class="glass-panel" id="panelStage1">
+            <div class="upload-area" id="dropArea">
+                <span class="upload-icon">📸</span>
+                <p style="font-size: 1.1rem; font-weight: 500; margin-bottom: 5px; color: white;">추억 사진들을 업로드하세요</p>
+                <p style="font-size: 0.9rem;">여기를 클릭하거나 드래그 앤 드롭 (최대 5장)</p>
+                <input type="file" id="fileInput" class="file-input" accept="image/*" multiple>
+            </div>
+
+            <!-- SORTABLE PREVIEW TIMELINE -->
+            <div class="timeline-container" id="timelineContainer">
+                <div class="timeline-title">
+                    <span>🔄</span> 연대기순 타임라인 재정렬 (과거에서 미래 순으로 배열해 보세요)
+                </div>
+                <div class="timeline-grid" id="timelineGrid">
+                    <!-- Javascript will render timeline cards here dynamically -->
+                </div>
+                <button class="btn-primary" id="btnCreate">✨ Create Memory Album ✨</button>
+            </div>
+        </div>
+
+        <!-- STAGE 2: BACKEND PROGRESS LOG TRACKER -->
+        <div class="glass-panel progress-container" id="panelStage2">
+            <div class="progress-title">우리의 추억을 엮어 인공지능 음악 앨범 제작 중...</div>
+            
+            <div class="progress-steps-list">
+                <div class="progress-step" id="step1">
+                    <span class="progress-step-icon" id="iconStep1">⏳</span>
+                    <span>1단계: 이미지 연대기별 다중 감성 코칭 분석 (Gemini 3.5 Flash)</span>
+                </div>
+                <div class="progress-step" id="step2">
+                    <span class="progress-step-icon" id="iconStep2">⏳</span>
+                    <span>2단계: 종합 감정 흐름 스토리 & 음악 프롬프트 합성 (Gemini 3.5 Flash)</span>
+                </div>
+                <div class="progress-step" id="step3">
+                    <span class="progress-step-icon" id="iconStep3">⏳</span>
+                    <span>3단계: 멜로디 및 백그라운드 연주 사운드 작곡 (DeepMind Lyria 3)</span>
+                </div>
+                <div class="progress-step" id="step4">
+                    <span class="progress-step-icon" id="iconStep4">⏳</span>
+                    <span>4단계: 독창적인 싱글 디스크 앨범 표지 아트 생성 (Imagen 4)</span>
+                </div>
+            </div>
+
+            <div class="progress-bar-outer">
+                <div class="progress-bar-inner" id="progressBarInner"></div>
+            </div>
+        </div>
+
+        <!-- STAGE 3: PREMIUM MUSIC SLIDESHOW PLAYER -->
+        <div class="player-container" id="panelStage3">
+            
+            <!-- Left Column: Rotating Vinyl Deck -->
+            <div class="glass-panel player-left">
+                <div class="vinyl-wrapper">
+                    <div class="vinyl-record" id="vinylRecord">
+                        <img id="vinylCover" class="vinyl-cover" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" alt="Album Label">
+                        <div class="vinyl-center-hole"></div>
+                    </div>
+                </div>
+
+                <!-- Live Glowing Pulsing Visualizer -->
+                <div class="visualizer-container" id="visualizer">
+                    <div class="visualizer-bar" style="animation-delay: 0.1s;"></div>
+                    <div class="visualizer-bar" style="animation-delay: 0.3s;"></div>
+                    <div class="visualizer-bar" style="animation-delay: 0.5s;"></div>
+                    <div class="visualizer-bar" style="animation-delay: 0.2s;"></div>
+                    <div class="visualizer-bar" style="animation-delay: 0.4s;"></div>
+                    <div class="visualizer-bar" style="animation-delay: 0.6s;"></div>
+                    <div class="visualizer-bar" style="animation-delay: 0.15s;"></div>
+                    <div class="visualizer-bar" style="animation-delay: 0.35s;"></div>
+                </div>
+            </div>
+
+            <!-- Right Column: Slide Control Deck -->
+            <div class="player-right">
+                <!-- Slideshow Box -->
+                <div class="slideshow-viewport">
+                    <div class="ambient-bg" id="ambientBg"></div>
+                    <div id="slideImagesContainer">
+                        <!-- Dynamic slides go here -->
+                    </div>
+                    <!-- Navigation overlays -->
+                    <div class="slide-nav-overlay">
+                        <button class="slide-arrow" id="btnPrevSlide">◀</button>
+                        <button class="slide-arrow" id="btnNextSlide">▶</button>
+                    </div>
+                    <div class="slide-indicator" id="slideIndicator">0 / 0</div>
+                </div>
+
+                <!-- Glassmorphic Dashboard Panel -->
+                <div class="dashboard-panel">
+                    <div class="dashboard-header">
+                        <div class="track-info">
+                            <span class="track-title">우리의 푸르른 계절 (Our Cherished Memory)</span>
+                            <span class="track-artist">AI Orchestrated single • Lyria 3 & Imagen 4</span>
+                        </div>
+                    </div>
+
+                    <!-- Progress slider bar -->
+                    <div class="track-progress-container">
+                        <span class="time-label" id="timeCurrent">0:00</span>
+                        <input type="range" class="progress-slider" id="audioSlider" min="0" max="100" value="0">
+                        <span class="time-label" id="timeTotal">0:00</span>
+                    </div>
+
+                    <div class="track-controls">
+                        <button class="ctrl-btn" id="btnPrevTrack" style="font-size: 1.1rem; opacity: 0.6;">⏮</button>
+                        <button class="ctrl-btn ctrl-btn-play" id="btnPlay">▶</button>
+                        <button class="ctrl-btn" id="btnNextTrack" style="font-size: 1.1rem; opacity: 0.6;">⏭</button>
+                    </div>
+
+                    <div class="utility-controls">
+                        <!-- Slide Autoplay Toggle -->
+                        <div class="autoplay-toggle">
+                            <span>슬라이드 자동 재생</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="autoplayCheck" checked>
+                                <span class="slider-round"></span>
+                            </label>
+                        </div>
+
+                        <!-- Volume sliders -->
+                        <div class="volume-controls">
+                            <span>🔊</span>
+                            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="80">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accompanying Lyrics Window -->
+                <div class="lyrics-panel">
+                    <h4>📝 작사 및 감성 가사 (Lyrics)</h4>
+                    <div class="lyrics-content" id="lyricsContent">가사가 존재하지 않는 연주곡이거나 현재 분석 중입니다.</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- COLLAPSIBLE DEV DRAWER (DEV VIEW) -->
+        <div class="dev-drawer" id="devDrawer">
+            <div class="dev-drawer-header" id="devDrawerHeader">
+                <span>💻 개발자용 상세 감성 리포트 대시보드 (Developer View)</span>
+                <span id="devArrow">▶</span>
+            </div>
+            <div class="dev-drawer-content" id="devDrawerContent">
+                <div class="dev-prompt-card">
+                    <div class="dev-prompt-title">합성된 사운드 트랙 프롬프트 (Synthesized Soundtrack Prompt)</div>
+                    <div class="dev-prompt-text" id="devSynthPrompt">제작이 시작되면 여기에 Lyria로 전송된 통합 음악 영어 프롬프트가 표시됩니다.</div>
+                </div>
+                <div class="dev-stories-grid" id="devStoriesGrid">
+                    <div style="color: var(--text-muted); font-size: 0.85rem; font-style: italic;">
+                        각 개별 메모리 사진들에 대해 Gemini 3.5 Flash가 도출해 낸 정밀 세부 감성 해설 목록들이 이곳에 표시됩니다.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        Memory Soundtrack Web Application v5 • Powered by Google DeepMind Gemini & Lyria
+    </footer>
+
+    <script>
+        // Global variables for files and pipeline data
+        let uploadedFiles = [];
+        let generatedData = null;
+        let activeSlideIndex = 0;
+        let autoplayTimer = null;
+        const AUTOPLAY_INTERVAL_MS = 5000;
+
+        // Custom Web Audio player
+        const audio = new Audio();
+
+        // ----------------------------------------------------
+        // DOM Elements
+        // ----------------------------------------------------
+        const configExpander = document.getElementById('configExpander');
+        const configContent = document.getElementById('configContent');
+        const configArrow = document.getElementById('configArrow');
+
+        const dropArea = document.getElementById('dropArea');
+        const fileInput = document.getElementById('fileInput');
+        const timelineContainer = document.getElementById('timelineContainer');
+        const timelineGrid = document.getElementById('timelineGrid');
+        const btnCreate = document.getElementById('btnCreate');
+
+        const panelStage1 = document.getElementById('panelStage1');
+        const panelStage2 = document.getElementById('panelStage2');
+        const panelStage3 = document.getElementById('panelStage3');
+
+        // Progress indicators
+        const step1 = document.getElementById('step1');
+        const step2 = document.getElementById('step2');
+        const step3 = document.getElementById('step3');
+        const step4 = document.getElementById('step4');
+        const iconStep1 = document.getElementById('iconStep1');
+        const iconStep2 = document.getElementById('iconStep2');
+        const iconStep3 = document.getElementById('iconStep3');
+        const iconStep4 = document.getElementById('iconStep4');
+        const progressBarInner = document.getElementById('progressBarInner');
+
+        // Player elements
+        const vinylRecord = document.getElementById('vinylRecord');
+        const vinylCover = document.getElementById('vinylCover');
+        const visualizer = document.getElementById('visualizer');
+        const ambientBg = document.getElementById('ambientBg');
+        const slideImagesContainer = document.getElementById('slideImagesContainer');
+        const btnPrevSlide = document.getElementById('btnPrevSlide');
+        const btnNextSlide = document.getElementById('btnNextSlide');
+        const slideIndicator = document.getElementById('slideIndicator');
+
+        // Playback control elements
+        const btnPlay = document.getElementById('btnPlay');
+        const timeCurrent = document.getElementById('timeCurrent');
+        const timeTotal = document.getElementById('timeTotal');
+        const audioSlider = document.getElementById('audioSlider');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const autoplayCheck = document.getElementById('autoplayCheck');
+        const lyricsContent = document.getElementById('lyricsContent');
+
+        // Developer View elements
+        const devDrawerHeader = document.getElementById('devDrawerHeader');
+        const devDrawerContent = document.getElementById('devDrawerContent');
+        const devArrow = document.getElementById('devArrow');
+        const devSynthPrompt = document.getElementById('devSynthPrompt');
+        const devStoriesGrid = document.getElementById('devStoriesGrid');
+
+        // ----------------------------------------------------
+        // Expanders Event Listeners
+        // ----------------------------------------------------
+        configExpander.addEventListener('click', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+            const isActive = configContent.classList.toggle('active');
+            configArrow.textContent = isActive ? '▼' : '▶';
+        });
+
+        devDrawerHeader.addEventListener('click', () => {
+            const isActive = devDrawerContent.classList.toggle('active');
+            devArrow.textContent = isActive ? '▼' : '▶';
+        });
+
+        // ----------------------------------------------------
+        // File Drag & Drop Handlers
+        // ----------------------------------------------------
+        dropArea.addEventListener('click', () => fileInput.click());
+
+        dropArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropArea.classList.add('dragover');
+        });
+
+        dropArea.addEventListener('dragleave', () => {
+            dropArea.classList.remove('dragover');
+        });
+
+        dropArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                handleFiles(Array.from(e.dataTransfer.files));
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFiles(Array.from(e.target.files));
+            }
+        });
+
+        // Process files into Timeline Cards
+        function handleFiles(files) {
+            // Limit to 5 files
+            const validFiles = files.filter(f => f.type.startsWith('image/')).slice(0, 5);
+            if (validFiles.length === 0) return;
+
+            uploadedFiles = validFiles;
+            renderTimeline();
+        }
+
+        function renderTimeline() {
+            timelineGrid.innerHTML = '';
+            uploadedFiles.forEach((file, index) => {
+                const card = document.createElement('div');
+                card.className = 'timeline-card';
+
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                card.appendChild(img);
+
+                const info = document.createElement('div');
+                info.className = 'timeline-card-info';
+
+                const num = document.createElement('span');
+                num.className = 'timeline-card-number';
+                num.textContent = `Timeline #${index + 1}`;
+                info.appendChild(num);
+
+                const controls = document.createElement('div');
+                controls.className = 'timeline-card-controls';
+
+                const btnLeft = document.createElement('button');
+                btnLeft.className = 'timeline-btn';
+                btnLeft.textContent = '◀';
+                btnLeft.onclick = (e) => {
+                    e.stopPropagation();
+                    moveCard(index, -1);
+                };
+
+                const btnRight = document.createElement('button');
+                btnRight.className = 'timeline-btn';
+                btnRight.textContent = '▶';
+                btnRight.onclick = (e) => {
+                    e.stopPropagation();
+                    moveCard(index, 1);
+                };
+
+                controls.appendChild(btnLeft);
+                controls.appendChild(btnRight);
+                info.appendChild(controls);
+
+                card.appendChild(info);
+                timelineGrid.appendChild(card);
+            });
+
+            timelineContainer.classList.add('active');
+        }
+
+        function moveCard(index, direction) {
+            const targetIndex = index + direction;
+            if (targetIndex < 0 || targetIndex >= uploadedFiles.length) return;
+
+            const temp = uploadedFiles[index];
+            uploadedFiles[index] = uploadedFiles[targetIndex];
+            uploadedFiles[targetIndex] = temp;
+
+            renderTimeline();
+        }
+
+        // ----------------------------------------------------
+        // Trigger Sequential AI Creation Pipeline
+        // ----------------------------------------------------
+        btnCreate.addEventListener('click', async () => {
+            if (uploadedFiles.length === 0) return;
+
+            // Transition stage UI
+            panelStage1.style.display = 'none';
+            panelStage2.classList.add('active');
+
+            // Gather configurations
+            const formData = new FormData();
+            uploadedFiles.forEach(file => formData.append('images', file));
+            
+            formData.append('api_type', document.getElementById('apiType').value);
+            if (document.getElementById('apiKey').value) formData.append('api_key', document.getElementById('apiKey').value);
+            if (document.getElementById('projectId').value) formData.append('project_id', document.getElementById('projectId').value);
+            formData.append('location', document.getElementById('location').value);
+            formData.append('gemini_model', document.getElementById('geminiModel').value);
+            formData.append('lyria_model', document.getElementById('lyriaModel').value);
+            formData.append('imagen_model', document.getElementById('imagenModel').value);
+
+            // Start simulated progress steps to give highly responsive updates
+            updateProgress(1);
+
+            try {
+                // Perform real server fetch request
+                const response = await fetch('/api/create-album', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.detail || "서버 연동 중 알 수 없는 장애가 발생했습니다.");
+                }
+
+                generatedData = await response.json();
+                
+                // Complete all steps in the progress bar
+                updateProgress(5);
+                
+                // Load assets into player
+                setTimeout(() => {
+                    initializePremiumPlayer();
+                }, 800);
+
+            } catch (err) {
+                alert(`❌ 앨범 생성에 실패했습니다: ${err.message}`);
+                // Revert Stage 1
+                panelStage2.classList.remove('active');
+                panelStage1.style.display = 'block';
+            }
+        });
+
+        // ----------------------------------------------------
+        // Progress Logging Tracker Helper
+        // ----------------------------------------------------
+        function updateProgress(stepNum) {
+            // Reset steps styling
+            const steps = [step1, step2, step3, step4];
+            const icons = [iconStep1, iconStep2, iconStep3, iconStep4];
+            const emojies = ['🔍', '📝', '🎵', '🎨'];
+
+            steps.forEach((step, idx) => {
+                step.className = 'progress-step';
+                icons[idx].textContent = '⏳';
+            });
+
+            if (stepNum >= 1 && stepNum <= 4) {
+                // Mark previous steps as completed
+                for (let i = 0; i < stepNum - 1; i++) {
+                    steps[i].className = 'progress-step completed';
+                    icons[i].textContent = '✅';
+                }
+                // Mark current step
+                steps[stepNum - 1].className = 'progress-step current';
+                icons[stepNum - 1].textContent = '🔄';
+                progressBarInner.style.width = `${(stepNum - 0.5) * 25}%`;
+
+                // Auto-advance simulated step after short intervals to keep user engaged
+                if (stepNum === 1) {
+                    setTimeout(() => updateProgress(2), 5000);
+                } else if (stepNum === 2) {
+                    setTimeout(() => updateProgress(3), 6000);
+                } else if (stepNum === 3) {
+                    setTimeout(() => updateProgress(4), 10000);
+                }
+            } else if (stepNum === 5) {
+                // Mark all completed
+                steps.forEach((step, idx) => {
+                    step.className = 'progress-step completed';
+                    icons[idx].textContent = '✅';
+                });
+                progressBarInner.style.width = '100%';
+            }
+        }
+
+        // ----------------------------------------------------
+        // Premium Synced Player Initialization
+        // ----------------------------------------------------
+        function initializePremiumPlayer() {
+            if (!generatedData) return;
+
+            // Transition UI
+            panelStage2.classList.remove('active');
+            panelStage3.classList.add('active');
+
+            // Load audio bytes Base64 into HTML Audio
+            audio.src = generatedData.audio_base64;
+            audio.volume = volumeSlider.value / 100;
+
+            // Load generated Album Cover
+            vinylCover.src = generatedData.cover_base64;
+
+            // Setup Developer Story View details
+            devSynthPrompt.textContent = generatedData.soundtrack_prompt;
+            devStoriesGrid.innerHTML = '';
+            generatedData.analyses.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'dev-story-card';
+                card.innerHTML = `
+                    <div class="dev-story-header">🖼️ Photo #${item.index}: ${item.filename}</div>
+                    <div class="dev-story-body">${item.analysis}</div>
+                `;
+                devStoriesGrid.appendChild(card);
+            });
+
+            // Setup Lyrics panel
+            if (generatedData.lyrics) {
+                lyricsContent.textContent = generatedData.lyrics;
+            } else {
+                lyricsContent.textContent = "구글 Lyria 3에 의해 독창적으로 작곡된 Instrumental 테마곡입니다.";
+            }
+
+            // Create memory photo slides
+            slideImagesContainer.innerHTML = '';
+            
+            // Create Cover art as slide 0
+            const coverSlide = document.createElement('img');
+            coverSlide.className = 'slide-image active';
+            coverSlide.src = generatedData.cover_base64;
+            slideImagesContainer.appendChild(coverSlide);
+
+            // Add memory slides
+            generatedData.slides.forEach(slideB64 => {
+                const slide = document.createElement('img');
+                slide.className = 'slide-image';
+                slide.src = slideB64;
+                slideImagesContainer.appendChild(slide);
+            });
+
+            activeSlideIndex = 0;
+            updateSlideshowView();
+
+            // Set up Autoplay Slideshow logic
+            startSlideshowTimer();
+        }
+
+        function updateSlideshowView() {
+            const slides = document.querySelectorAll('.slide-image');
+            if (slides.length === 0) return;
+
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[activeSlideIndex].classList.add('active');
+
+            // Ambient blurred background sync
+            ambientBg.style.backgroundImage = `url('${slides[activeSlideIndex].src}')`;
+
+            slideIndicator.textContent = `${activeSlideIndex} / ${slides.length - 1}`;
+        }
+
+        // ----------------------------------------------------
+        // Player Control Dashboard Actions
+        // ----------------------------------------------------
+        btnPlay.addEventListener('click', () => {
+            if (audio.paused) {
+                audio.play();
+                btnPlay.textContent = '⏸';
+                vinylRecord.classList.add('playing');
+                toggleVisualizer(true);
+                startSlideshowTimer();
+            } else {
+                audio.pause();
+                btnPlay.textContent = '▶';
+                vinylRecord.classList.remove('playing');
+                toggleVisualizer(false);
+                stopSlideshowTimer();
+            }
+        });
+
+        // Sync visualizers to audio playing state
+        function toggleVisualizer(isActive) {
+            const bars = document.querySelectorAll('.visualizer-bar');
+            bars.forEach(bar => {
+                if (isActive) {
+                    bar.classList.add('active');
+                } else {
+                    bar.classList.remove('active');
+                }
+            });
+        }
+
+        // Track Slider Seek & Volume logic
+        audio.addEventListener('timeupdate', () => {
+            if (audio.duration) {
+                const percentage = (audio.currentTime / audio.duration) * 100;
+                audioSlider.value = percentage;
+                timeCurrent.textContent = formatTime(audio.currentTime);
+                timeTotal.textContent = formatTime(audio.duration);
+            }
+        });
+
+        audioSlider.addEventListener('input', () => {
+            if (audio.duration) {
+                audio.currentTime = (audioSlider.value / 100) * audio.duration;
+            }
+        });
+
+        volumeSlider.addEventListener('input', () => {
+            audio.volume = volumeSlider.value / 100;
+        });
+
+        // Format duration seconds to mm:ss
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        // Audio finishes playing reset
+        audio.addEventListener('ended', () => {
+            btnPlay.textContent = '▶';
+            vinylRecord.classList.remove('playing');
+            toggleVisualizer(false);
+            stopSlideshowTimer();
+            activeSlideIndex = 0;
+            updateSlideshowView();
+        });
+
+        // ----------------------------------------------------
+        // Slideshow Transitions & Controls
+        // ----------------------------------------------------
+        btnPrevSlide.addEventListener('click', () => {
+            const slides = document.querySelectorAll('.slide-image');
+            if (slides.length <= 1) return;
+
+            activeSlideIndex--;
+            if (activeSlideIndex < 0) {
+                activeSlideIndex = slides.length - 1;
+            }
+            updateSlideshowView();
+            // Reset timer on manual nav
+            resetSlideshowTimer();
+        });
+
+        btnNextSlide.addEventListener('click', () => {
+            advanceSlide();
+            resetSlideshowTimer();
+        });
+
+        function advanceSlide() {
+            const slides = document.querySelectorAll('.slide-image');
+            if (slides.length <= 1) return;
+
+            activeSlideIndex++;
+            if (activeSlideIndex >= slides.length) {
+                activeSlideIndex = 0;
+            }
+            updateSlideshowView();
+        }
+
+        function startSlideshowTimer() {
+            if (!autoplayCheck.checked || audio.paused || autoplayTimer) return;
+            autoplayTimer = setInterval(advanceSlide, AUTOPLAY_INTERVAL_MS);
+        }
+
+        function stopSlideshowTimer() {
+            if (autoplayTimer) {
+                clearInterval(autoplayTimer);
+                autoplayTimer = null;
+            }
+        }
+
+        function resetSlideshowTimer() {
+            stopSlideshowTimer();
+            startSlideshowTimer();
+        }
+
+        autoplayCheck.addEventListener('change', () => {
+            if (autoplayCheck.checked) {
+                startSlideshowTimer();
+            } else {
+                stopSlideshowTimer();
+            }
+        });
+    </script>
+</body>
+</html>
