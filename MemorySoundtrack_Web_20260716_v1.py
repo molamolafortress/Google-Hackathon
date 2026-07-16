@@ -156,11 +156,19 @@ async def create_album(
     synth_prompt = (
         f"Below are the stories and musical directions for a collection of memory photos:\n"
         f"{combined_context}\n\n"
-        f"Based on these stories, please synthesize a highly detailed prompt for a music generation model (Lyria). "
+        f"Based on these stories, please synthesize a highly detailed and complete prompt for a music generation model (Lyria). "
         f"The prompt must describe a single cohesive 30-second soundtrack that blends the emotional elements of all these memories. "
-        f"Describe the style, genre, instrumentation, tempo, mood, and vocal features (if any). "
+        f"Your response must be a single, complete, well-structured paragraph or a few clearly structured lines. "
+        f"Include the following details:\n"
+        f"1. Genre & Style (e.g., Lofi Jazz, Indie Folk Fusion)\n"
+        f"2. Mood & Atmosphere (e.g., warm, nostalgic, breezy)\n"
+        f"3. Instrumentation (e.g., acoustic nylon guitar, Fender Rhodes electric piano, brush drums, warm double bass plucks)\n"
+        f"4. Tempo & Rhythm (e.g., relaxed tempo of 76 BPM)\n"
+        f"5. Structure/Progression (e.g., starting with [Intro], moving into [Main], and ending with [Outro])\n"
+        f"6. Vocal/Melody (e.g., breezy whistling or soft vocal humming)\n\n"
+        f"Ensure that your output ends with a complete, finished sentence and does not cut off mid-thought. "
         f"Write this prompt in clear English, optimized for music AI. "
-        f"Output ONLY the optimized music generation prompt."
+        f"Output ONLY the optimized music generation prompt, with no introductory or concluding conversational filler."
     )
     
     try:
