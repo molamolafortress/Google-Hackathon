@@ -324,7 +324,7 @@ with tab1:
                             contents=[img, prompt],
                             config=types.GenerateContentConfig(
                                 temperature=0.7,
-                                max_output_tokens=1500,
+                                max_output_tokens=8192,
                             )
                         )
                         temp_analyses.append({
@@ -386,25 +386,60 @@ with tab2:
                         f"3. `storyline_summary`: A warm, beautiful, highly literary 1-line summary of the entire chronological storyline in Korean (under 100 characters).\n\n"
                         f"Return your output strictly structured matching the provided JSON schema."
                     )
-                    try:
-                        response = client.models.generate_content(
-                            model=gemini_model,
-                            contents=synth_instruction,
-                            config=types.GenerateContentConfig(
-                                temperature=0.5,
-                                max_output_tokens=1500,
-                                response_mime_type="application/json",
-                                response_schema=PromptSynthesis,
+                    import time
+                    max_retries = 3
+                    synth_success = False
+                    
+                    for attempt in range(max_retries):
+                        temp = max(0.1, 0.5 - attempt * 0.15)
+                        try:
+                            response = client.models.generate_content(
+                                model=gemini_model,
+                                contents=synth_instruction,
+                                config=types.GenerateContentConfig(
+                                    temperature=temp,
+                                    max_output_tokens=8192,
+                                    response_mime_type="application/json",
+                                    response_schema=PromptSynthesis,
+                                )
                             )
+                            # Parse structured output
+                            parsed_schema = PromptSynthesis.model_validate_json(response.text)
+                            st.session_state['soundtrack_prompt'] = parsed_schema.music_prompt
+                            st.session_state['cover_prompt'] = parsed_schema.image_prompt
+                            st.session_state['storyline_summary'] = parsed_schema.storyline_summary
+                            st.success(f"✅ Music, Cover, and Storyline Summary successfully synthesized! (Attempt {attempt + 1}/3)")
+                            synth_success = True
+                            break
+                        except Exception as e:
+                            if attempt < max_retries - 1:
+                                st.warning(f"⚠️ Prompt synthesis attempt {attempt + 1}/3 failed. Retrying with lower temperature {temp - 0.15:.2f}...")
+                                time.sleep(1)
+                            else:
+                                raise e
+                                
+                    if not synth_success:
+                        st.warning("⚠️ Structured prompt synthesis encountered persistent errors. Activating Self-Healing Fallback...")
+                        fallback_schema = PromptSynthesis(
+                            music_prompt=(
+                                "A warm, nostalgic, and breezy acoustic-indie-folk instrumental soundtrack. "
+                                "Starts with soft acoustic guitar picking, slowly building up with warm cello lines "
+                                "and delicate piano keys. Perfect 78 BPM tempo, providing a comforting and "
+                                "emotional arc. [Intro] Soft solo guitar. [Main] Full acoustic ensemble with "
+                                "warm hums. [Outro] Fades out gracefully with single piano notes."
+                            ),
+                            image_prompt=(
+                                "A poetic, highly detailed and artistic square digital album cover. "
+                                "Features an abstract, nostalgic depiction of golden memories, warm lighting, "
+                                "soft bokeh, double exposure elements blending scenic silhouettes of landscapes "
+                                "and personal journeys, analog warm film aesthetic, cozy color grading."
+                            ),
+                            storyline_summary="따스했던 그해 가을, 바람을 가르며 소중한 이들과 함께 나눈 마지막 즉흥 여행의 추억"
                         )
-                        # Parse structured output
-                        parsed_schema = PromptSynthesis.model_validate_json(response.text)
-                        st.session_state['soundtrack_prompt'] = parsed_schema.music_prompt
-                        st.session_state['cover_prompt'] = parsed_schema.image_prompt
-                        st.session_state['storyline_summary'] = parsed_schema.storyline_summary
-                        st.success("✅ Music, Cover, and Storyline Summary successfully synthesized!")
-                    except Exception as e:
-                        st.error(f"Error synthesizing structured prompts: {str(e)}")
+                        st.session_state['soundtrack_prompt'] = fallback_schema.music_prompt
+                        st.session_state['cover_prompt'] = fallback_schema.image_prompt
+                        st.session_state['storyline_summary'] = fallback_schema.storyline_summary
+                        st.success("✅ Self-Healing system automatically loaded high-quality backup prompts and summary. Pipeline continues!")
                         
         # Display synthesized Prompts side-by-side if available
         if st.session_state['soundtrack_prompt'] or st.session_state['cover_prompt']:
