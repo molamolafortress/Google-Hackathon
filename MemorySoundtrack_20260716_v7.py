@@ -17,6 +17,7 @@ load_dotenv()
 class PromptSynthesis(BaseModel):
     music_prompt: str
     image_prompt: str
+    storyline_summary: str  # A warm, sentimental 1-line summary of the entire storyline in Korean
 
 # ----------------------------------------------------
 # 1. Page Configuration & Theme Initialization
@@ -114,6 +115,20 @@ st.markdown("""
         font-weight: 500;
         color: #38bdf8;
     }
+
+    /* Evocative summary styling */
+    .summary-box {
+        background: linear-gradient(135deg, rgba(236, 72, 153, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 12px;
+        padding: 14px 20px;
+        text-align: center;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #f1f5f9;
+        margin-top: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -163,6 +178,8 @@ if 'soundtrack_prompt' not in st.session_state:
     st.session_state['soundtrack_prompt'] = ""
 if 'cover_prompt' not in st.session_state:
     st.session_state['cover_prompt'] = ""
+if 'storyline_summary' not in st.session_state:
+    st.session_state['storyline_summary'] = ""
 if 'audio_bytes' not in st.session_state:
     st.session_state['audio_bytes'] = None
 if 'lyrics' not in st.session_state:
@@ -323,18 +340,20 @@ with tab1:
                 st.session_state['analyses'] = temp_analyses
                 st.success("✅ Memory analysis complete!")
                 
-    # Display completed analyses
+    # Display completed analyses side-by-side with photo
     if st.session_state['analyses']:
         st.write("")
         st.markdown("### 📂 Extracted Stories & Vibes")
         for item in st.session_state['analyses']:
             with st.container():
-                st.markdown(f"""
-                <div class='glass-card'>
-                    <h4>🖼️ Photo #{item['index']}: {item['filename']}</h4>
-                    <p style='white-space: pre-wrap; font-size: 0.95rem; color: #cbd5e1;'>{item['analysis']}</p>
-                </div>
-                """, unsafe_allow_html=True)
+                st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
+                col_item_l, col_item_r = st.columns([1, 2])
+                with col_item_l:
+                    st.image(item['image'], caption=f"Photo #{item['index']}: {item['filename']}", use_container_width=True)
+                with col_item_r:
+                    st.markdown(f"#### 🖼️ Timeline #{item['index']} Emotional Analysis")
+                    st.markdown(f"<p style='white-space: pre-wrap; font-size: 0.95rem; color: #cbd5e1;'>{item['analysis']}</p>", unsafe_allow_html=True)
+                st.markdown("</div>", unsafe_allow_html=True)
 
 # TAB 2: Unified Soundtrack & Art Generation
 with tab2:
@@ -350,74 +369,42 @@ with tab2:
         ])
         
         # Master Prompts Synthesis Button (Structured Output)
-        if st.button("📝 Synthesize Soundtrack & Cover Prompts", key="btn_synth_prompt"):
+        if st.button("📝 Synthesize Soundtrack, Cover & Summary", key="btn_synth_prompt"):
             client = get_client()
             if client:
-                with st.spinner("Synthesizing stories into dual prompts using structured Pydantic schemas..."):
+                with st.spinner("Synthesizing stories into prompts & 1-line storyline summary..."):
                     synth_instruction = (
                         f"Below are the individual emotional story-analyses of a chronological collection of memory photos:\n"
                         f"{combined_context}\n\n"
-                        f"Your task is to analyze these chronological stories and synthesize TWO distinct prompts:\n\n"
+                        f"Your task is to analyze these chronological stories and synthesize THREE distinct outputs:\n\n"
                         f"1. `music_prompt`: A highly detailed, complete prompt for a music AI (Lyria). "
                         f"It must describe a single cohesive 30-second soundtrack blending the emotional arc of all the photos. "
-                        f"Specify: Style/Genre, Mood, detailed Instrumentation (e.g. acoustic nylon guitar, electric Rhodes, brush drums), Tempo (BPM), Structure ([Intro], [Main], [Outro]), and Vocal/Melody (e.g. whistling/humming). "
+                        f"Specify: Style/Genre, Mood, detailed Instrumentation (e.g. acoustic nylon guitar, electric Rhodes, brush drums), Tempo (BPM), Structure ([Intro], [Main], [Outro]), and Vocal/Melody. "
                         f"Ensure this prompt ends in a finished sentence and doesn't cut off.\n\n"
                         f"2. `image_prompt`: A poetic, vivid, high-fidelity prompt for an image AI (Imagen 4) to render a single, square, professional digital album cover. "
-                        f"It must abstractly represent the core emotional theme of the collection. "
-                        f"Do NOT include text, numbers, or standard generic layouts. Focus on artistic style, cinematic lighting, and symbolic visual metaphor.\n\n"
+                        f"It must abstractly represent the core emotional theme of the collection. Do NOT include text.\n\n"
+                        f"3. `storyline_summary`: A warm, beautiful, highly literary 1-line summary of the entire chronological storyline in Korean (under 100 characters).\n\n"
                         f"Return your output strictly structured matching the provided JSON schema."
                     )
-                    import time
-                    max_retries = 3
-                    synth_success = False
-                    
-                    for attempt in range(max_retries):
-                        temp = max(0.1, 0.5 - attempt * 0.15)
-                        try:
-                            response = client.models.generate_content(
-                                model=gemini_model,
-                                contents=synth_instruction,
-                                config=types.GenerateContentConfig(
-                                    temperature=temp,
-                                    max_output_tokens=10000,
-                                    response_mime_type="application/json",
-                                    response_schema=PromptSynthesis,
-                                )
-                            )
-                            # Parse structured output
-                            parsed_schema = PromptSynthesis.model_validate_json(response.text)
-                            st.session_state['soundtrack_prompt'] = parsed_schema.music_prompt
-                            st.session_state['cover_prompt'] = parsed_schema.image_prompt
-                            st.success(f"✅ Music and Cover prompts successfully synthesized with 100% structured reliability! (Attempt {attempt + 1}/3)")
-                            synth_success = True
-                            break
-                        except Exception as e:
-                            if attempt < max_retries - 1:
-                                st.warning(f"⚠️ Prompt synthesis attempt {attempt + 1}/3 failed due to parsing/structure error. Retrying with lower temperature {temp - 0.15:.2f}...")
-                                time.sleep(1)
-                            else:
-                                raise e
-                                
-                    if not synth_success:
-                        st.warning("⚠️ Structured prompt synthesis encountered persistent errors. Activating Self-Healing Fallback...")
-                        fallback_schema = PromptSynthesis(
-                            music_prompt=(
-                                "A warm, nostalgic, and breezy acoustic-indie-folk instrumental soundtrack. "
-                                "Starts with soft acoustic guitar picking, slowly building up with warm cello lines "
-                                "and delicate piano keys. Perfect 78 BPM tempo, providing a comforting and "
-                                "emotional arc. [Intro] Soft solo guitar. [Main] Full acoustic ensemble with "
-                                "warm hums. [Outro] Fades out gracefully with single piano notes."
-                            ),
-                            image_prompt=(
-                                "A poetic, highly detailed and artistic square digital album cover. "
-                                "Features an abstract, nostalgic depiction of golden memories, warm lighting, "
-                                "soft bokeh, double exposure elements blending scenic silhouettes of landscapes "
-                                "and personal journeys, analog warm film aesthetic, cozy color grading."
+                    try:
+                        response = client.models.generate_content(
+                            model=gemini_model,
+                            contents=synth_instruction,
+                            config=types.GenerateContentConfig(
+                                temperature=0.5,
+                                max_output_tokens=1500,
+                                response_mime_type="application/json",
+                                response_schema=PromptSynthesis,
                             )
                         )
-                        st.session_state['soundtrack_prompt'] = fallback_schema.music_prompt
-                        st.session_state['cover_prompt'] = fallback_schema.image_prompt
-                        st.success("✅ Self-Healing system automatically loaded high-quality backup prompts. Pipeline continues!")
+                        # Parse structured output
+                        parsed_schema = PromptSynthesis.model_validate_json(response.text)
+                        st.session_state['soundtrack_prompt'] = parsed_schema.music_prompt
+                        st.session_state['cover_prompt'] = parsed_schema.image_prompt
+                        st.session_state['storyline_summary'] = parsed_schema.storyline_summary
+                        st.success("✅ Music, Cover, and Storyline Summary successfully synthesized!")
+                    except Exception as e:
+                        st.error(f"Error synthesizing structured prompts: {str(e)}")
                         
         # Display synthesized Prompts side-by-side if available
         if st.session_state['soundtrack_prompt'] or st.session_state['cover_prompt']:
@@ -444,15 +431,22 @@ with tab2:
                 )
                 st.session_state['cover_prompt'] = edited_cover
                 
+            if st.session_state['storyline_summary']:
+                st.markdown("##### ✨ Storyline 1-Line Summary (Korean)")
+                edited_summary = st.text_input(
+                    "Customize 1-Line Storyline Summary",
+                    value=st.session_state['storyline_summary'],
+                    key="ta_storyline_summary"
+                )
+                st.session_state['storyline_summary'] = edited_summary
+
             # Master Single-Step Assets Generation Button
             st.write("")
             if st.button("🎶 Compose Soundtrack & Render Cover Art", key="btn_generate_all_assets"):
                 client = get_client()
                 if client:
-                    # Sequential Generation Loop
-                    # Step 1: Composing soundtrack
                     audio_success = False
-                    with st.spinner("Step 1/2: Composing background soundtrack with DeepMind Lyria (please wait)..."):
+                    with st.spinner("Step 1/2: Composing background soundtrack with DeepMind Lyria..."):
                         try:
                             interaction = client.interactions.create(
                                 model=lyria_model,
@@ -472,7 +466,6 @@ with tab2:
                         except Exception as e:
                             st.error(f"Error during Lyria soundtrack composition: {str(e)}")
                             
-                    # Step 2: Rendering Cover Art
                     if audio_success:
                         with st.spinner("Step 2/2: Rendering single album cover art with Imagen 4..."):
                             try:
@@ -504,6 +497,16 @@ with tab2:
             
             with col_player_left:
                 st.image(st.session_state['cover_bytes'], caption="Imagen 4 Album Cover Art", use_container_width=True)
+                
+                # Floating Storyline summary card directly underneath the album cover
+                if st.session_state['storyline_summary']:
+                    st.markdown(f"""
+                    <div class="summary-box">
+                        ✨ {st.session_state['storyline_summary']}
+                    </div>
+                    """, unsafe_allow_html=True)
+                st.write("")
+                
                 st.download_button(
                     label="📥 Download Album Cover (PNG)",
                     data=st.session_state['cover_bytes'],

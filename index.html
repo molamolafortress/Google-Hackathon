@@ -544,18 +544,146 @@
             transition: background-image 1s ease-in-out;
         }
 
-        .slide-image {
+        .slide-item {
             position: absolute;
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            display: flex;
+            flex-direction: row;
             z-index: 1;
             opacity: 0;
             transition: opacity 1s ease-in-out;
+            pointer-events: none;
         }
 
-        .slide-image.active {
+        .slide-item.active {
             opacity: 1;
+            pointer-events: auto;
+        }
+
+        .slide-media-container {
+            width: 50%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background: rgba(0, 0, 0, 0.35);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            box-sizing: border-box;
+            padding: 24px;
+            padding-bottom: 75px; /* Leave space for storyline summary */
+        }
+
+        .slide-photo {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            object-fit: contain;
+            transition: transform 0.5s ease;
+        }
+
+        .slide-photo:hover {
+            transform: scale(1.02);
+        }
+
+        .slide-info-container {
+            width: 50%;
+            height: 100%;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: rgba(12, 12, 22, 0.65);
+            backdrop-filter: blur(15px);
+            box-sizing: border-box;
+            overflow-y: auto;
+            color: #eaeaf2;
+        }
+
+        .slide-info-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #a8b2ff;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            padding-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .slide-info-text {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            color: #d1d1e5;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.15) transparent;
+        }
+
+        .slide-info-text::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .slide-info-text::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.15);
+            border-radius: 3px;
+        }
+
+        .cover-story-summary {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.18) 0%, rgba(99, 102, 241, 0.18) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(15px);
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-size: 0.92rem;
+            color: #ffffff;
+            font-weight: 600;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.55);
+            animation: pulse-border-gradient 3s infinite alternate;
+            letter-spacing: 0.5px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+
+        @keyframes pulse-border-gradient {
+            0% {
+                border-color: rgba(255, 255, 255, 0.15);
+                box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            }
+            100% {
+                border-color: rgba(236, 72, 153, 0.45);
+                box-shadow: 0 4px 22px rgba(236, 72, 153, 0.25);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .slide-item {
+                flex-direction: column;
+            }
+            .slide-media-container {
+                width: 100%;
+                height: 52%;
+                border-right: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                padding-bottom: 60px;
+            }
+            .slide-info-container {
+                width: 100%;
+                height: 48%;
+                padding: 18px;
+            }
+            .slideshow-viewport {
+                aspect-ratio: 9/10;
+            }
         }
 
         /* Slide navigation Overlay */
@@ -1443,21 +1571,46 @@
                 lyricsContent.textContent = "구글 Lyria 3에 의해 독창적으로 작곡된 Instrumental 테마곡입니다.";
             }
 
-            // Create memory photo slides
+            // Create memory photo slides with side-by-side analysis
             slideImagesContainer.innerHTML = '';
             
-            // Create Cover art as slide 0
-            const coverSlide = document.createElement('img');
-            coverSlide.className = 'slide-image active';
-            coverSlide.src = generatedData.cover_base64;
-            slideImagesContainer.appendChild(coverSlide);
+            // 1. Create Cover art as Slide 0
+            const coverItem = document.createElement('div');
+            coverItem.className = 'slide-item active';
+            
+            const summaryText = generatedData.storyline_summary || "당신의 소중한 순간들이 모여 하나의 아름다운 음악 앨범이 되었습니다.";
+            
+            coverItem.innerHTML = `
+                <div class="slide-media-container">
+                    <img class="slide-photo" src="${generatedData.cover_base64}" alt="Album Cover">
+                    <div class="cover-story-summary">✨ ${summaryText}</div>
+                </div>
+                <div class="slide-info-container">
+                    <div class="slide-info-title">💿 Album Cover & Music Theme</div>
+                    <div class="slide-info-text">이 특별한 디지털 싱글 앨범은 당신의 추억과 감성을 담아 AI가 제작한 앨범 커버와 고유 합성 음악을 결합하여 만들어졌습니다.\n\n오른쪽 재생 버튼을 누르거나 커버를 옆으로 넘기면, 당신만을 위해 편곡된 감미로운 테마곡이 흘러나옵니다.\n\n<b>[앨범 요약 프롬프트]</b>\n${generatedData.cover_prompt || "고유 합성된 앨범 커버용 이미지 생성 프롬프트가 여기에 표시됩니다."}</div>
+                </div>
+            `;
+            slideImagesContainer.appendChild(coverItem);
 
-            // Add memory slides
-            generatedData.slides.forEach(slideB64 => {
-                const slide = document.createElement('img');
-                slide.className = 'slide-image';
-                slide.src = slideB64;
-                slideImagesContainer.appendChild(slide);
+            // 2. Add memory slides (Slides 1 to N)
+            generatedData.slides.forEach((slideB64, idx) => {
+                const analysisItem = generatedData.analyses[idx];
+                const filename = analysisItem ? analysisItem.filename : `Photo #${idx+1}`;
+                const analysisText = analysisItem ? analysisItem.analysis : "사진 분석 자료를 불러올 수 없습니다.";
+                
+                const slideItem = document.createElement('div');
+                slideItem.className = 'slide-item';
+                
+                slideItem.innerHTML = `
+                    <div class="slide-media-container">
+                        <img class="slide-photo" src="${slideB64}" alt="${filename}">
+                    </div>
+                    <div class="slide-info-container">
+                        <div class="slide-info-title">🖼️ Photo #${idx+1} 스토리텔링</div>
+                        <div class="slide-info-text">${analysisText}</div>
+                    </div>
+                `;
+                slideImagesContainer.appendChild(slideItem);
             });
 
             activeSlideIndex = 0;
@@ -1468,14 +1621,26 @@
         }
 
         function updateSlideshowView() {
-            const slides = document.querySelectorAll('.slide-image');
+            const slides = document.querySelectorAll('.slide-item');
             if (slides.length === 0) return;
 
             slides.forEach(slide => slide.classList.remove('active'));
             slides[activeSlideIndex].classList.add('active');
 
-            // Ambient blurred background sync
-            ambientBg.style.backgroundImage = `url('${slides[activeSlideIndex].src}')`;
+            // Ambient blurred background sync using the active slide photo
+            const activeImg = slides[activeSlideIndex].querySelector('.slide-photo');
+            if (activeImg) {
+                ambientBg.style.backgroundImage = `url('${activeImg.src}')`;
+            }
+
+            // Interactive Music Playback Trigger: If transitioned past Slide 0 to any memory slide, play audio!
+            if (activeSlideIndex > 0 && audio.paused) {
+                audio.play();
+                btnPlay.textContent = '⏸';
+                vinylRecord.classList.add('playing');
+                toggleVisualizer(true);
+                startSlideshowTimer();
+            }
 
             slideIndicator.textContent = `${activeSlideIndex} / ${slides.length - 1}`;
         }
@@ -1552,7 +1717,7 @@
         // Slideshow Transitions & Controls
         // ----------------------------------------------------
         btnPrevSlide.addEventListener('click', () => {
-            const slides = document.querySelectorAll('.slide-image');
+            const slides = document.querySelectorAll('.slide-item');
             if (slides.length <= 1) return;
 
             activeSlideIndex--;
@@ -1570,7 +1735,7 @@
         });
 
         function advanceSlide() {
-            const slides = document.querySelectorAll('.slide-image');
+            const slides = document.querySelectorAll('.slide-item');
             if (slides.length <= 1) return;
 
             activeSlideIndex++;

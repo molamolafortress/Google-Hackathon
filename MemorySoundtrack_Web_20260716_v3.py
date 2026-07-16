@@ -27,12 +27,13 @@ load_dotenv()
 class PromptSynthesis(BaseModel):
     music_prompt: str
     image_prompt: str
+    storyline_summary: str  # A warm, sentimental 1-line summary of the entire storyline in Korean
 
 # Initialize FastAPI app
 app = FastAPI(
     title="Memory Soundtrack Generator API",
     description="Backend service for generating music soundtracks and album covers from memory photos.",
-    version="2.0.0"
+    version="3.0.0"
 )
 
 def get_local_ip():
@@ -50,7 +51,7 @@ def get_local_ip():
 async def startup_event():
     local_ip = get_local_ip()
     logger.info("\n" + "="*70)
-    logger.info("🚀 Memory Soundtrack Web Application (v2) is successfully running!")
+    logger.info("🚀 Memory Soundtrack Web Application (v3) is successfully running!")
     logger.info(f"🔗 Local PC URL:      http://localhost:8000/")
     logger.info(f"📱 Same Wi-Fi URL:    http://{local_ip}:8000/  (스마트폰/태블릿으로 무선 접속 가능!)")
     logger.info("="*70 + "\n")
@@ -110,7 +111,7 @@ async def create_album(
     """
     Receives chronological memory photos and orchestrates:
     1. Chronological Image Story Analysis (Gemini 3.5 Flash) - detailed, rich and non-truncated
-    2. Music & Cover Prompt Synthesis (Gemini 3.5 Flash via structured JSON schema)
+    2. Music, Cover & Storyline Summary Synthesis (Gemini 3.5 Flash via structured JSON schema)
     3. Soundtrack Generation (DeepMind Lyria 3)
     4. Album Cover Art Generation (Imagen 4 via dedicated cover prompt)
     Returns complete asset payload in Base64 JSON format.
@@ -186,7 +187,7 @@ async def create_album(
             raise HTTPException(status_code=500, detail=f"Error analyzing image #{idx+1} ({file.filename}): {str(e)}")
             
     # Step 2: Story Synthesis & Music & Cover Prompt Creation
-    logger.info("Step 2: Synthesizing music and cover prompts via Gemini...")
+    logger.info("Step 2: Synthesizing music, cover prompts & storyline summary via Gemini...")
     combined_context = "\n\n".join([
         f"Photo #{item['index']} story:\n{item['analysis']}"
         for item in analyses_results
@@ -195,66 +196,35 @@ async def create_album(
     synth_prompt = (
         f"Below are the stories and musical directions for a collection of memory photos:\n"
         f"{combined_context}\n\n"
-        f"Based on these stories, please synthesize a highly detailed and complete prompt for a music generation model (Lyria) and an artistic album cover generation prompt (for Imagen 4).\n"
+        f"Based on these stories, please synthesize a highly detailed and complete prompt for a music generation model (Lyria), "
+        f"an artistic album cover generation prompt (for Imagen 4), and a warm, evocative 1-line storyline summary in Korean.\n"
         f"The music prompt must describe a single cohesive 30-second soundtrack that blends the emotional elements of all these memories. "
         f"Include detailed Style/Genre, Mood, Instrumentation, Tempo (e.g. relaxed 76 BPM), and a clear structural progression with section tags like [Intro], [Main], and [Outro].\n"
-        f"The album cover prompt must describe a beautiful, poetic, and artistic image representing these memory themes, optimized for high-quality digital art without any text.\n\n"
-        f"Ensure that both generated prompts are completely filled, rich, and do not cut off mid-sentence. Output both fields matching the requested JSON structure exactly."
+        f"The album cover prompt must describe a beautiful, poetic, and artistic image representing these memory themes, optimized for high-quality digital art without any text.\n"
+        f"The storyline_summary must be a beautiful, warm, and highly literary 1-line summary in Korean (under 100 characters) that encapsulates the entire narrative arc of these photos (e.g., '따스했던 그해 가을, 바람을 가르며 친구들과 함께 나눈 마지막 즉흥 여행의 추억').\n\n"
+        f"Ensure that all generated fields are completely filled, rich, and do not cut off mid-sentence. Output all fields matching the requested JSON structure exactly."
     )
     
-    import time
-    max_retries = 3
-    synth_success = False
-    soundtrack_prompt = ""
-    cover_prompt = ""
-    
-    for attempt in range(max_retries):
-        temp = max(0.1, 0.4 - attempt * 0.1)
-        try:
-            response = client.models.generate_content(
-                model=gemini_model,
-                contents=synth_prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=PromptSynthesis,
-                    temperature=temp,
-                    max_output_tokens=10000,
-                )
+    try:
+        response = client.models.generate_content(
+            model=gemini_model,
+            contents=synth_prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_schema=PromptSynthesis,
+                temperature=0.4,
             )
-            result_dict = json.loads(response.text)
-            soundtrack_prompt = result_dict.get("music_prompt", "")
-            cover_prompt = result_dict.get("image_prompt", "")
-            
-            if soundtrack_prompt and cover_prompt:
-                logger.info(f"Music Prompt Synthesized (Attempt {attempt+1}/3): {soundtrack_prompt[:100]}...")
-                logger.info(f"Cover Prompt Synthesized (Attempt {attempt+1}/3): {cover_prompt[:100]}...")
-                synth_success = True
-                break
-            else:
-                raise ValueError("Synthesized prompts are empty.")
-        except Exception as e:
-            logger.warning(f"Prompt synthesis attempt {attempt + 1}/3 failed: {str(e)[:150]}. Retrying with temperature {max(0.1, temp - 0.1):.2f}...")
-            if attempt < max_retries - 1:
-                time.sleep(1)
-            else:
-                logger.error(f"All {max_retries} attempts to synthesize structured prompts failed: {str(e)}")
-                
-    if not synth_success:
-        logger.warning("Structured prompt synthesis failed persistent attempts. Activating Self-Healing Fallback...")
-        soundtrack_prompt = (
-            "A warm, nostalgic, and breezy acoustic-indie-folk instrumental soundtrack. "
-            "Starts with soft acoustic guitar picking, slowly building up with warm cello lines "
-            "and delicate piano keys. Perfect 78 BPM tempo, providing a comforting and "
-            "emotional arc. [Intro] Soft solo guitar. [Main] Full acoustic ensemble with "
-            "warm hums. [Outro] Fades out gracefully with single piano notes."
         )
-        cover_prompt = (
-            "A poetic, highly detailed and artistic square digital album cover. "
-            "Features an abstract, nostalgic depiction of golden memories, warm lighting, "
-            "soft bokeh, double exposure elements blending scenic silhouettes of landscapes "
-            "and personal journeys, analog warm film aesthetic, cozy color grading."
-        )
-        logger.info("Self-Healing system successfully loaded high-quality backup prompts.")
+        result_dict = json.loads(response.text)
+        soundtrack_prompt = result_dict.get("music_prompt", "")
+        cover_prompt = result_dict.get("image_prompt", "")
+        storyline_summary = result_dict.get("storyline_summary", "")
+        logger.info(f"Music Prompt Synthesized: {soundtrack_prompt[:100]}...")
+        logger.info(f"Cover Prompt Synthesized: {cover_prompt[:100]}...")
+        logger.info(f"Storyline Summary Synthesized: {storyline_summary}...")
+    except Exception as e:
+        logger.error(f"Error synthesizing music prompt: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error synthesizing music/cover prompts: {str(e)}")
         
     # Step 3: Soundtrack Generation (DeepMind Lyria 3)
     logger.info("Step 3: Composing soundtrack via DeepMind Lyria...")
@@ -269,8 +239,6 @@ async def create_album(
         
         generated_audio = interaction.output_audio
         if generated_audio and generated_audio.data:
-            # We already have base64 data string in generated_audio.data from Lyria API
-            # Just wrap it in Data URL structure or keep standard base64
             audio_base64_data = f"data:audio/mp3;base64,{generated_audio.data}"
             if interaction.output_text:
                 lyrics_text = interaction.output_text
@@ -312,6 +280,7 @@ async def create_album(
         "analyses": analyses_results,
         "soundtrack_prompt": soundtrack_prompt,
         "cover_prompt": cover_prompt,
+        "storyline_summary": storyline_summary,
         "audio_base64": audio_base64_data,
         "lyrics": lyrics_text,
         "cover_base64": cover_base64_data,
