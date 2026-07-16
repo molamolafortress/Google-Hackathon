@@ -1,48 +1,13 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
+# Ignore large video demo file (exceeds GitHub 100MB limit)
+demo vid.mp4
 
-# Distribution / packaging
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Virtual environments
-.venv/
-venv/
-ENV/
-env/
-
-# IDEs and editors
-.vscode/
-.idea/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# Local environment variables / secrets
+# Ignore local secret environment keys
 .env
-.env.*
-secret.key
-credentials.json
+.env.local
 
-# System files
-Thumbs.db
-Desktop.ini
-.DS_Store
+# Ignore Python runtime compile files and virtual environments
+__pycache__/
+*.pyc
+venv/
+.venv/
+.streamlit/
