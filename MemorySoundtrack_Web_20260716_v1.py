@@ -2,6 +2,7 @@ import os
 import base64
 import io
 import logging
+import socket
 from typing import List
 from fastapi import FastAPI, File, UploadFile, HTTPException, Form
 from fastapi.responses import HTMLResponse, FileResponse
@@ -24,6 +25,27 @@ app = FastAPI(
     description="Backend service for generating music soundtracks and album covers from memory photos.",
     version="1.0.0"
 )
+
+def get_local_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(('10.255.255.255', 1))
+        ip = s.getsockname()[0]
+    except Exception:
+        ip = '127.0.0.1'
+    finally:
+        s.close()
+    return ip
+
+@app.on_event("startup")
+async def startup_event():
+    local_ip = get_local_ip()
+    logger.info("\n" + "="*70)
+    logger.info("🚀 Memory Soundtrack Web Application is successfully running!")
+    logger.info(f"🔗 Local PC URL:      http://localhost:8000/")
+    logger.info(f"📱 Same Wi-Fi URL:    http://{local_ip}:8000/  (스마트폰/태블릿으로 무선 접속 가능!)")
+    logger.info("="*70 + "\n")
+
 
 # Enable CORS for local cross-origin testing
 app.add_middleware(
