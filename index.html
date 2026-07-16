@@ -1106,9 +1106,15 @@
                 <span id="devArrow">▶</span>
             </div>
             <div class="dev-drawer-content" id="devDrawerContent">
-                <div class="dev-prompt-card">
-                    <div class="dev-prompt-title">합성된 사운드 트랙 프롬프트 (Synthesized Soundtrack Prompt)</div>
-                    <div class="dev-prompt-text" id="devSynthPrompt">제작이 시작되면 여기에 Lyria로 전송된 통합 음악 영어 프롬프트가 표시됩니다.</div>
+                <div class="dev-prompts-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <div class="dev-prompt-card" style="margin-bottom: 0;">
+                        <div class="dev-prompt-title">🎵 합성된 음악 프롬프트 (Synthesized Soundtrack Prompt)</div>
+                        <div class="dev-prompt-text" id="devSynthPrompt">제작이 시작되면 여기에 Lyria로 전송된 통합 음악 영어 프롬프트가 표시됩니다.</div>
+                    </div>
+                    <div class="dev-prompt-card" style="margin-bottom: 0;">
+                        <div class="dev-prompt-title">🎨 합성된 앨범 커버 프롬프트 (Synthesized Cover Prompt)</div>
+                        <div class="dev-prompt-text" id="devCoverPrompt">제작이 시작되면 여기에 Imagen 4로 전송된 앨범 커버 아트 프롬프트가 표시됩니다.</div>
+                    </div>
                 </div>
                 <div class="dev-stories-grid" id="devStoriesGrid">
                     <div style="color: var(--text-muted); font-size: 0.85rem; font-style: italic;">
@@ -1121,7 +1127,7 @@
     </div>
 
     <footer>
-        Memory Soundtrack Web Application v5 • Powered by Google DeepMind Gemini & Lyria
+        Memory Soundtrack Web Application v2 • Powered by Google DeepMind Gemini & Lyria
     </footer>
 
     <script>
@@ -1187,6 +1193,7 @@
         const devDrawerContent = document.getElementById('devDrawerContent');
         const devArrow = document.getElementById('devArrow');
         const devSynthPrompt = document.getElementById('devSynthPrompt');
+        const devCoverPrompt = document.getElementById('devCoverPrompt');
         const devStoriesGrid = document.getElementById('devStoriesGrid');
 
         // ----------------------------------------------------
@@ -1417,6 +1424,7 @@
 
             // Setup Developer Story View details
             devSynthPrompt.textContent = generatedData.soundtrack_prompt;
+            devCoverPrompt.textContent = generatedData.cover_prompt || "고유 합성된 앨범 커버용 이미지 생성 프롬프트가 여기에 표시됩니다.";
             devStoriesGrid.innerHTML = '';
             generatedData.analyses.forEach(item => {
                 const card = document.createElement('div');
