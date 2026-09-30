@@ -1,4 +1,4 @@
-# Memory Soundtrack Generator - Standardized Project Checklist (v3)
+# Memory Soundtrack Generator - Standardized Project Checklist (v4)
 
 This checklist tracks the implementation, integration, and verification states for our project designs. Use it to check off completed features and verify system integrity after each design change.
 
@@ -36,7 +36,7 @@ This checklist tracks the implementation, integration, and verification states f
 - [x] Trigger an explicit `st.rerun()` upon swapping positions to guarantee UI reflects the state change immediately.
 - [x] Verify that E2E pipeline (`Analyze Memories`) analyzes photos strictly in the adjusted stateful order.
 
-### 1.5 [NEW] Unified Synthesis & Combined Asset Generation
+### 1.5 Unified Synthesis & Combined Asset Generation
 - [x] Implement a Pydantic structured output model `class PromptSynthesis(BaseModel)` containing:
   - `music_prompt: str` (highly detailed, complete, structured English prompt for Lyria)
   - `image_prompt: str` (poetic, high-fidelity prompt for Imagen 4 album cover)
@@ -59,7 +59,7 @@ This checklist tracks the implementation, integration, and verification states f
 - [x] Integrate socket UDP lookup to print the local network IP and connection URL on server startup.
 - [x] Create API Endpoint `POST /api/create-album` to receive image uploads.
 
-### 2.2 Orchestration API Logic & [NEW] Unified Synthesis
+### 2.2 Orchestration API Logic & Unified Synthesis
 - [x] Parse incoming multipart form data containing uploaded image files in frontend-prescribed chronological order.
 - [x] Keep original multimodal Korean detailed story analysis.
 - [x] Upgrade prompt synthesis using the Pydantic structured output model to generate **both** the `music_prompt` and `image_prompt` in a single query.
@@ -84,3 +84,28 @@ This checklist tracks the implementation, integration, and verification states f
 - [x] Perform a full syntax check on the new Python app.
 - [x] Push all new Web Application files and checklists to the remote GitHub repository.
 - [x] Update the central daily log with implementation and verification results.
+
+---
+
+## 📋 [NEW] Section 3: Self-Healing Structured Prompt Synthesis (v7 Plan)
+
+This section outlines the action plan and verification checklists for implementing robust, fault-tolerant unified prompt synthesis.
+
+### 3.1 Action Plan & Technical Design
+- [x] **Raise Token Limit Ceiling**: Increase `max_output_tokens` in Gemini generation configurations to `10000` to prevent truncation during long memory syntheses.
+- [x] **Enforce Prompt Formatting Guidelines**: Inject clear instructions into system prompts to strictly forbid unescaped control characters or unescaped double quotes that could breach JSON structure.
+- [x] **Implement Auto-Retry with Temperature Decay**: 
+  - Wrap Pydantic validation and JSON loading inside a robust `try-except` retry block (up to 3 attempts).
+  - Gradually lower `temperature` on each retry attempt (`0.5 -> 0.3 -> 0.1`) to force the model to produce more deterministic and syntactically clean responses.
+- [x] **Configure Self-Healing Fallback**:
+  - Implement a default high-quality backup prompt set to load automatically if all 3 retry attempts fail.
+  - Ensure that the pipeline never halts or crashes due to structured parsing exceptions.
+
+### 3.2 Implementation Execution Checkpoints
+- [x] Apply the self-healing retry and fallback logic to the Streamlit sandboxed app: `MemorySoundtrack_20260716_v6.py`.
+- [x] Apply the self-healing retry and fallback logic to the FastAPI backend: `MemorySoundtrack_Web_20260716_v2.py`.
+
+### 3.3 Verification & Deployment Checklist
+- [x] Run syntax check on modified files using `python -m py_compile`.
+- [x] Manually test or simulate a truncated response parse error and verify that the fallback triggers correctly.
+- [x] Stage, commit, and push changes to the remote GitHub repository.
